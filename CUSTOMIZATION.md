@@ -273,6 +273,22 @@ The agent will automatically see the tool's name, docstring, and parameter types
 
 If you only use Linear (not Slack), remove `slack_thread_reply` from the tools list and vice versa. If you don't need web fetching, remove `fetch_url`.
 
+### Web search
+
+The coding agent and reviewer share the existing `web_search` tool. Set these variables in the LangGraph server environment:
+
+| Configuration | Provider |
+|---|---|
+| No `WEB_SEARCH_PROVIDER` and no `EXA_API_KEY` | Anonymous [Parallel Search MCP](https://docs.parallel.ai/integrations/mcp/search-mcp), using Fast mode |
+| No `WEB_SEARCH_PROVIDER` and an existing `EXA_API_KEY` | Exa, preserving existing deployments |
+| `WEB_SEARCH_PROVIDER=parallel` | Parallel, even when an Exa key is present |
+| `WEB_SEARCH_PROVIDER=exa` | Exa; requires `EXA_API_KEY` |
+| `WEB_SEARCH_PROVIDER=disabled` | No search requests |
+
+Parallel needs no account or API key and sends queries from the server to `https://search.parallel.ai/mcp`. Its anonymous tier has service-managed rate limits; quota, connection and provider errors are returned without falling back to another provider. Requests have a 30-second deadline, and cancelling a run cancels an in-flight Parallel request. Set `WEB_SEARCH_PROVIDER=disabled` to keep search off in installations that previously omitted the Exa key intentionally. Removing `web_search` from an agent's tool list continues to prevent tool dispatch.
+
+Both providers keep the `success`, `results` and `error` response fields. Parallel returns source URLs and, when `include_contents=True`, relevant page excerpts rather than Exa's full page text. `num_results` limits the returned results to at most the requested count; the service may return fewer. Set `include_contents=False` to omit Parallel excerpts. Keep Exa selected for its full-page-text behavior, or use the existing `fetch_url` tool to read a discovered URL.
+
 ### Conditional tools
 
 You can vary the toolset based on the trigger source:
